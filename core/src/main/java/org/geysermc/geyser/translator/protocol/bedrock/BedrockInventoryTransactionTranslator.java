@@ -282,7 +282,7 @@ public class BedrockInventoryTransactionTranslator extends PacketTranslator<Inve
 
                         BlockState blockState = session.getGeyser().getWorldManager().blockAt(session, packet.getBlockPosition());
 
-                        if (blockState.block() instanceof BedBlock) {
+                        if (blockState.block() instanceof BedBlock || blockState.is(Blocks.STRAW_BED)) {
                             // The server will move us onto the bed before it tells us we are asleep;
                             // hold back movement until then. See GeyserSession#startEnteringBed.
                             session.startEnteringBed();
