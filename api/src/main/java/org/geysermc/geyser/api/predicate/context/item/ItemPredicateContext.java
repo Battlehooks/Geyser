@@ -89,6 +89,12 @@ public interface ItemPredicateContext extends MinecraftPredicateContext {
     @Nullable Identifier trimMaterial();
 
     /**
+     * @return the identifier of the potion in the item's {@code minecraft:potion_contents} component, or null if no potion is referenced
+     * @since 2.12.0
+     */
+    @Nullable Identifier potion();
+
+    /**
      * @return all the charged projectiles in the {@code minecraft:charged_projectiles} component
      * @since 2.9.3
      */

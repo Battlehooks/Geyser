@@ -37,6 +37,7 @@ import org.geysermc.geyser.registry.mappings.util.NodeReader;
 public enum ItemMatchProperty implements PredicateReader<ItemPredicateContext> {
     CHARGE_TYPE(ItemMatchPredicate::chargeType, NodeReader.CHARGE_TYPE),
     TRIM_MATERIAL(ItemMatchPredicate::trimMaterial, NodeReader.IDENTIFIER),
+    POTION(ItemMatchPredicate::potion, NodeReader.IDENTIFIER),
     CONTEXT_DIMENSION((element, context) -> MatchPredicate.dimension(readValue(element, NodeReader.IDENTIFIER, context))),
     CUSTOM_MODEL_DATA((element, context) -> {
         int index = MappingsUtil.readOrDefault(element, "index", NodeReader.NON_NEGATIVE_INT, 0, context);

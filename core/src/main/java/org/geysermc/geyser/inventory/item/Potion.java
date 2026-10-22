@@ -76,10 +76,10 @@ public enum Potion {
     LUCK(2, ArrowParticleColors.LUCK), // does not exist in Bedrock
     SLOW_FALLING(40, ArrowParticleColors.SLOW_FALLING),
     LONG_SLOW_FALLING(41, ArrowParticleColors.SLOW_FALLING),
-    WIND_CHARGING(43, ArrowParticleColors.WIND_CHARGING),
+    WIND_CHARGING(43, ArrowParticleColors.WIND_CHARGING, "wind_charged"),
     WEAVING(44, ArrowParticleColors.WEAVING),
     OOZING(45, ArrowParticleColors.OOZING),
-    INFESTATION(46, ArrowParticleColors.INFESTATION);
+    INFESTATION(46, ArrowParticleColors.INFESTATION, "infested");
 
     public static final Potion[] VALUES = values();
 
@@ -88,7 +88,12 @@ public enum Potion {
     private final int javaColor;
 
     Potion(int bedrockId, int javaColor) {
-        this.javaIdentifier = "minecraft:" + this.name().toLowerCase(Locale.ENGLISH);
+        this(bedrockId, javaColor, null);
+    }
+
+    Potion(int bedrockId, int javaColor, String javaPath) {
+        // Java names some potions differently from their constant (e.g. minecraft:wind_charged, minecraft:infested)
+        this.javaIdentifier = "minecraft:" + (javaPath != null ? javaPath : this.name().toLowerCase(Locale.ENGLISH));
         this.bedrockId = (short) bedrockId;
         this.javaColor = javaColor;
     }
