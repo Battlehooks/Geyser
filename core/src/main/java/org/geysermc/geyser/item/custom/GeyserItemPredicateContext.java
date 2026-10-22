@@ -32,6 +32,7 @@ import org.geysermc.geyser.api.predicate.context.item.ChargedProjectile;
 import org.geysermc.geyser.api.predicate.context.item.ItemPredicateContext;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.inventory.GeyserItemStack;
+import org.geysermc.geyser.inventory.item.Potion;
 import org.geysermc.geyser.item.Items;
 import org.geysermc.geyser.item.custom.impl.predicates.GeyserChargedProjectile;
 import org.geysermc.geyser.registry.java.JavaRegistryProvider;
@@ -45,6 +46,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.component.ArmorTrim;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.CustomModelData;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponents;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.PotionContents;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -53,7 +55,8 @@ import java.util.stream.Collectors;
 public record GeyserItemPredicateContext(Supplier<Identifier> dimensionSupplier, int count, Supplier<Integer> maxStackSizeSupplier,
                                          Supplier<Integer> damageSupplier, Supplier<Integer> maxDamageSupplier,
                                          Supplier<Boolean> fishingRodCastSupplier, Supplier<Boolean> unbreakableSupplier,
-                                         Supplier<Float> bundleFullnessSupplier, Supplier<Identifier> trimMaterialSupplier, Supplier<List<ChargedProjectile>> chargedProjectilesSupplier,
+                                         Supplier<Float> bundleFullnessSupplier, Supplier<Identifier> trimMaterialSupplier, Supplier<Identifier> potionSupplier,
+                                         Supplier<List<ChargedProjectile>> chargedProjectilesSupplier,
                                          Supplier<List<Identifier>> componentsSupplier, Supplier<List<Boolean>> customModelDataFlagsSupplier, Supplier<List<String>> customModelDataStringsSupplier,
                                          Supplier<List<Float>> customModelDataFloatsSupplier) implements ItemPredicateContext {
     private static final CustomModelData EMPTY_CUSTOM_MODEL_DATA = new CustomModelData(List.of(), List.of(), List.of(), List.of());
@@ -96,6 +99,11 @@ public record GeyserItemPredicateContext(Supplier<Identifier> dimensionSupplier,
     @Override
     public @Nullable Identifier trimMaterial() {
         return trimMaterialSupplier.get();
+    }
+
+    @Override
+    public @Nullable Identifier potion() {
+        return potionSupplier.get();
     }
 
     @Override
@@ -172,6 +180,17 @@ public record GeyserItemPredicateContext(Supplier<Identifier> dimensionSupplier,
             return null;
         });
 
+        Supplier<Identifier> potion = Suppliers.memoize(() -> {
+            PotionContents potionContents = components.get(DataComponentTypes.POTION_CONTENTS);
+            if (potionContents != null) {
+                Potion javaPotion = Potion.getByJavaId(potionContents.getPotionId());
+                if (javaPotion != null) {
+                    return Identifier.of(javaPotion.getJavaIdentifier());
+                }
+            }
+            return null;
+        });
+
         Supplier<List<ChargedProjectile>> chargedProjectiles = Suppliers.memoize(() -> components.getOrDefault(DataComponentTypes.CHARGED_PROJECTILES, List.of()).stream()
             .map(GeyserItemPredicateContext::stackToProjectile).toList());
 
@@ -185,7 +204,7 @@ public record GeyserItemPredicateContext(Supplier<Identifier> dimensionSupplier,
         Supplier<List<Float>> floats = Suppliers.memoize(() -> customModelData.get().floats());
 
         return new GeyserItemPredicateContext(dimension, stackSize, maxStackSize, damage, maxDamage, fishingRodCast, unbreakable,
-            bundleFullness, trimMaterial, chargedProjectiles, componentList, flags, strings, floats);
+            bundleFullness, trimMaterial, potion, chargedProjectiles, componentList, flags, strings, floats);
     }
 
     private static ChargedProjectile stackToProjectile(ItemStack stack) {

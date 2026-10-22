@@ -73,6 +73,7 @@ import org.geysermc.geyser.api.predicate.item.ChargeTypePredicate;
 import org.geysermc.geyser.api.predicate.item.CustomModelDataPredicate;
 import org.geysermc.geyser.api.predicate.item.HasComponentPredicate;
 import org.geysermc.geyser.api.predicate.item.RangeDispatchPredicate;
+import org.geysermc.geyser.api.predicate.item.PotionPredicate;
 import org.geysermc.geyser.api.predicate.item.TrimMaterialPredicate;
 import org.geysermc.geyser.api.util.Holders;
 import org.geysermc.geyser.api.util.Identifier;
@@ -115,6 +116,7 @@ import org.geysermc.geyser.item.custom.impl.predicates.GeyserChargedProjectile;
 import org.geysermc.geyser.item.custom.impl.predicates.GeyserCustomModelDataPredicate;
 import org.geysermc.geyser.item.custom.impl.predicates.GeyserHasComponentPredicate;
 import org.geysermc.geyser.item.custom.impl.predicates.GeyserRangeDispatchPredicate;
+import org.geysermc.geyser.item.custom.impl.predicates.GeyserPotionPredicate;
 import org.geysermc.geyser.item.custom.impl.predicates.GeyserTrimMaterialPredicate;
 import org.geysermc.geyser.level.block.GeyserCustomBlockComponents;
 import org.geysermc.geyser.level.block.GeyserCustomBlockData;
@@ -206,6 +208,7 @@ public class ProviderRegistryLoader implements RegistryLoader<Map<Class<?>, Prov
         providers.put(HasComponentPredicate.class, args -> new GeyserHasComponentPredicate((Identifier) args[0], false));
         providers.put(ChargeTypePredicate.class, args -> new GeyserChargeTypePredicate((ChargedProjectile.ChargeType) args[0], false));
         providers.put(TrimMaterialPredicate.class, args -> new GeyserTrimMaterialPredicate((Identifier) args[0], false));
+        providers.put(PotionPredicate.class, args -> new GeyserPotionPredicate((Identifier) args[0], false));
         providers.put(CustomModelDataPredicate.StringPredicate.class, args -> new GeyserCustomModelDataPredicate.GeyserStringPredicate((String) args[0], (int) args[1], false));
         providers.put(RangeDispatchPredicate.class, ProviderRegistryLoader::createRangeDispatchPredicate);
 

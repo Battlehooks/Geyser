@@ -175,7 +175,9 @@ public class JavaEntityEventTranslator extends PacketTranslator<ClientboundEntit
             case TOTEM_OF_UNDYING_MAKE_SOUND:
                 // Bedrock will not play the spinning animation without the item in the hand o.o
                 // Fixes https://github.com/GeyserMC/Geyser/issues/2446
-                boolean totemItemWorkaround = !session.getPlayerInventory().isHolding(Items.TOTEM_OF_UNDYING);
+                // Also needed when the totem is mapped to a custom item (e.g. stackable totems): the held item is then not a vanilla Bedrock totem
+                boolean totemItemWorkaround = !session.getPlayerInventory().isHolding(Items.TOTEM_OF_UNDYING)
+                    || session.getItemMappings().getMapping(Items.TOTEM_OF_UNDYING).getCustomItemDefinitions() != null;
                 if (totemItemWorkaround) {
                     InventoryContentPacket offhandPacket = new InventoryContentPacket();
                     offhandPacket.setContainerId(ContainerId.OFFHAND);
