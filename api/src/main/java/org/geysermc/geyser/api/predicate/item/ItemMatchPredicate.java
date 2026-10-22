@@ -68,6 +68,18 @@ public interface ItemMatchPredicate extends MatchPredicate {
     }
 
     /**
+     * Creates a predicate matching the item's potion identifier. Works for any item with the {@code minecraft:potion_contents} component
+     * that references a potion, e.g. potions, splash potions, lingering potions and tipped arrows.
+     *
+     * @see ItemPredicateContext#potion()
+     * @see PotionPredicate
+     * @since 2.12.0
+     */
+    static MinecraftPredicate<ItemPredicateContext> potion(Identifier potion) {
+        return GeyserApi.api().provider(PotionPredicate.class, potion);
+    }
+
+    /**
      * Creates a predicate matching a string of the item's custom model data strings.
      *
      * @see ItemPredicateContext#customModelDataString(int)

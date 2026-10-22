@@ -43,6 +43,7 @@ import org.geysermc.geyser.inventory.recipe.GeyserRecipe;
 import org.geysermc.geyser.inventory.recipe.GeyserShapedRecipe;
 import org.geysermc.geyser.inventory.recipe.GeyserShapelessRecipe;
 import org.geysermc.geyser.inventory.recipe.GeyserStonecutterData;
+import org.geysermc.geyser.item.GeyserCustomMappingData;
 import org.geysermc.geyser.item.Items;
 import org.geysermc.geyser.item.type.Item;
 import org.geysermc.geyser.registry.java.JavaRegistries;
@@ -243,6 +244,17 @@ public class JavaUpdateRecipesTranslator extends PacketTranslator<ClientboundUpd
                     inputMapping.getBedrockDefinition().getRuntimeId(), inputMapping.getBedrockData(),
                     reagentMapping.getBedrockDefinition().getRuntimeId(), reagentMapping.getBedrockData(),
                     brewingOutput.getBedrockDefinition().getRuntimeId(), brewingOutput.getBedrockData()));
+
+                // Custom items replacing a brewing input (e.g. stackable potions) are their own Bedrock items,
+                // so the client also needs mixes for them, or it won't accept them in the bottle slots
+                if (inputMapping.getCustomItemDefinitions() != null) {
+                    for (GeyserCustomMappingData customMapping : inputMapping.getCustomItemDefinitions().values()) {
+                        mixes.add(new PotionMixData(
+                            customMapping.itemDefinition().getRuntimeId(), 0,
+                            reagentMapping.getBedrockDefinition().getRuntimeId(), reagentMapping.getBedrockData(),
+                            brewingOutput.getBedrockDefinition().getRuntimeId(), brewingOutput.getBedrockData()));
+                    }
+                }
             }
         }
     }
