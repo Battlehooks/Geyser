@@ -31,7 +31,6 @@ import org.cloudburstmc.protocol.bedrock.packet.ChunkRadiusUpdatedPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RespawnPacket;
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket;
-import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.entity.type.player.SessionPlayerEntity;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.TeleportCache;
@@ -55,7 +54,6 @@ public class JavaPlayerPositionTranslator extends PacketTranslator<ClientboundPl
         final SessionPlayerEntity entity = session.getPlayerEntity();
         if (entity.getVehicle() != null) { // Vanilla behaviour, the player ignores teleport if they're on a vehicle.
             acceptTeleport(session, entity.position().toDouble(), entity.getJavaYaw(), entity.getPitch(), packet.getId());
-            entity.setPendingBedInteraction(null);
             return;
         }
 
@@ -73,8 +71,7 @@ public class JavaPlayerPositionTranslator extends PacketTranslator<ClientboundPl
         // granted, vehicle handling calls it immediately as the teleport is ignored, so it can safely confirm
         // We shouldn't accept the teleport immediately (the method call was originally here) as we need the packets to be sent in order
         // teleport packet -> ping packet -> reply = client processed teleport (same logic as Java clients)
-        // for beds specifically, the Bedrock client doesn't care and has handled it, so we don't translate it, but the backend still expects a response
-        // so we call acceptTeleport there as well
+        // bed teleports are translated like any other teleport here; our bed fix (GeyserSession#confirmTeleport) stops Geyser re-sending the bed teleport to a sleeping Bedrock client
 
         if (!session.isSpawned()) {
             entity.setPosition(position.toFloat());
@@ -121,14 +118,12 @@ public class JavaPlayerPositionTranslator extends PacketTranslator<ClientboundPl
             if (session.getGeyser().config().debugMode()) {
                 session.getGeyser().getLogger().debug("Spawned player at " + packet.getPosition());
             }
-            entity.setPendingBedInteraction(null);
             acceptTeleport(session, position, newYaw, newPitch, teleportId);
             return;
         }
 
         Vector3f lastPlayerPosition = entity.position();
         session.getGeyser().getLogger().debug("Teleport (" + teleportId + ") from " + lastPlayerPosition);
-
         float lastPlayerPitch = entity.getPitch();
         float lastPlayerYaw = entity.getYaw();
         Vector3f teleportDestination = position.toFloat();
@@ -141,18 +136,6 @@ public class JavaPlayerPositionTranslator extends PacketTranslator<ClientboundPl
 
         if (packet.getRelatives().contains(PositionElement.ROTATE_DELTA)) {
             deltaMovement = MathUtils.xYRot(deltaMovement, (float) Math.toRadians(lastPlayerPitch - newPitch), (float) Math.toRadians(lastPlayerYaw - newYaw));
-        }
-
-        SessionPlayerEntity.PendingBedInteraction pendingBedInteraction = entity.getPendingBedInteraction();
-        if (pendingBedInteraction != null) {
-            // See the Javadocs over at SessionPlayerEntity#pendingBedInteraction - we need to silently ignore a teleport if it just teleports us to the bed
-
-            entity.setPendingBedInteraction(null);
-            if (looksLikeBedTeleport(pendingBedInteraction, position, deltaMovement)) {
-                GeyserImpl.getInstance().getLogger().debug("Not translating teleport because it is to a pending bed interaction");
-                acceptTeleport(session, position, newYaw, newPitch, teleportId);
-                return;
-            }
         }
 
         TeleportCache.TeleportType type = (deltaMovement.distanceSquared(Vector3f.ZERO) > 1.0E-8F) ?
@@ -210,10 +193,5 @@ public class JavaPlayerPositionTranslator extends PacketTranslator<ClientboundPl
             }
             session.sendDownstreamGamePacket(teleportConfirmPacket);
         });
-    }
-
-    private static boolean looksLikeBedTeleport(SessionPlayerEntity.PendingBedInteraction pendingInteraction, Vector3d packetPosition, Vector3f deltaMovement) {
-        // Teleports to a bed after a bed interaction always teleports to the centre of the bed (plus some Y offset), with a delta movement of 0 (as of Java 26.3)
-        return pendingInteraction.expectedTeleportPosition().equals(packetPosition) && deltaMovement.length() == 0.0;
     }
 }
