@@ -588,6 +588,10 @@ public class LivingEntity extends Entity implements Tickable {
      * Translates an item this entity has equipped, as Bedrock should see it in the given slot.
      */
     protected ItemData translateEquipment(GeyserItemStack stack, EquipmentSlot slot) {
+        if (slot == EquipmentSlot.BODY) {
+            // Custom-mapped horse armor/harnesses would be invisible on the mob for Bedrock, so keep the vanilla definition
+            return ItemTranslator.translateToBedrock(session, stack, false);
+        }
         return ItemTranslator.translateToBedrock(session, stack);
     }
 

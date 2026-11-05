@@ -193,6 +193,15 @@ public final class ItemTranslator {
 
     @NonNull
     public static ItemData translateToBedrock(GeyserSession session, @NonNull GeyserItemStack stack) {
+        return translateToBedrock(session, stack, true);
+    }
+
+    /**
+     * @param allowCustomItems if false, the vanilla Bedrock definition is kept even if the item is a Geyser custom item.
+     *                         Used for worn body equipment, as Bedrock can only render vanilla items on mobs.
+     */
+    @NonNull
+    public static ItemData translateToBedrock(GeyserSession session, @NonNull GeyserItemStack stack, boolean allowCustomItems) {
         if (stack.isEmpty()) {
             return ItemData.AIR;
         }
@@ -203,11 +212,19 @@ public final class ItemTranslator {
             return ItemData.AIR;
         }
 
-        return translateToBedrock(session, stack.asItem(), bedrockItem, stack.getAmount(), stack.getComponents())
+        return translateToBedrock(session, stack.asItem(), bedrockItem, stack.getAmount(), stack.getComponents(), allowCustomItems)
                 .build();
     }
 
     public static ItemData.@NonNull Builder translateToBedrock(GeyserSession session, Item javaItem, ItemMapping bedrockItem, int count, @Nullable DataComponents customComponents) {
+        return translateToBedrock(session, javaItem, bedrockItem, count, customComponents, true);
+    }
+
+    /**
+     * @param allowCustomItems if false, the vanilla Bedrock definition is kept even if the item is a Geyser custom item.
+     *                         Used for worn body equipment, as Bedrock can only render vanilla items on mobs.
+     */
+    public static ItemData.@NonNull Builder translateToBedrock(GeyserSession session, Item javaItem, ItemMapping bedrockItem, int count, @Nullable DataComponents customComponents, boolean allowCustomItems) {
         BedrockItemBuilder nbtBuilder = new BedrockItemBuilder();
 
         // Populates default components that aren't sent over the network
@@ -280,7 +297,9 @@ public final class ItemTranslator {
             translatePlayerHead(session, components.get(DataComponentTypes.PROFILE), builder);
         }
 
-        translateCustomItem(session, count, components, builder, bedrockItem);
+        if (allowCustomItems) {
+            translateCustomItem(session, count, components, builder, bedrockItem);
+        }
 
         // Translate the canDestroy and canPlaceOn Java components
         AdventureModePredicate canDestroy = components.get(DataComponentTypes.CAN_BREAK);
