@@ -578,7 +578,8 @@ public class LivingEntity extends Entity implements Tickable {
         armorEquipmentPacket.setChestplate(ItemTranslator.translateToBedrock(session, chestplate));
         armorEquipmentPacket.setLeggings(ItemTranslator.translateToBedrock(session, getItemInSlot(EquipmentSlot.LEGGINGS)));
         armorEquipmentPacket.setBoots(ItemTranslator.translateToBedrock(session, getItemInSlot(EquipmentSlot.BOOTS)));
-        armorEquipmentPacket.setBody(ItemTranslator.translateToBedrock(session, getItemInSlot(EquipmentSlot.BODY)));
+        // Custom-mapped horse armor/harnesses would be invisible on the mob for Bedrock, so keep the vanilla definition
+        armorEquipmentPacket.setBody(ItemTranslator.translateToBedrock(session, getItemInSlot(EquipmentSlot.BODY), false));
 
         session.sendUpstreamPacket(armorEquipmentPacket);
     }
