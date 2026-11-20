@@ -74,6 +74,7 @@ import org.geysermc.geyser.translator.inventory.chest.SingleChestInventoryTransl
 import org.geysermc.geyser.translator.inventory.furnace.BlastFurnaceInventoryTranslator;
 import org.geysermc.geyser.translator.inventory.furnace.FurnaceInventoryTranslator;
 import org.geysermc.geyser.translator.inventory.furnace.SmokerInventoryTranslator;
+import org.geysermc.geyser.util.GliderUtils;
 import org.geysermc.geyser.util.InventoryUtils;
 import org.geysermc.geyser.util.ItemUtils;
 import org.geysermc.mcprotocollib.protocol.data.game.inventory.ContainerType;
@@ -253,6 +254,7 @@ public abstract class InventoryTranslator<Type extends Inventory> {
 
     public final void translateRequests(GeyserSession session, Type inventory, List<ItemStackRequest> requests) {
         boolean refresh = false;
+        GeyserItemStack chestBefore = session.getPlayerInventory().getItem(6);
         ItemStackResponsePacket responsePacket = new ItemStackResponsePacket();
         for (ItemStackRequest request : requests) {
             ItemStackResponse response;
@@ -288,6 +290,13 @@ public abstract class InventoryTranslator<Type extends Inventory> {
             responsePacket.getEntries().add(response);
         }
         session.sendUpstreamPacket(responsePacket);
+
+        // The response carries no item definitions, so a glider moved into the chest slot needs its armor resent
+        GeyserItemStack chestAfter = session.getPlayerInventory().getItem(6);
+        if (chestAfter != null && (chestAfter != chestBefore || (chestBefore != null && chestAfter.getNetId() != chestBefore.getNetId()))
+                && GliderUtils.needsElytraSwap(session, chestAfter)) {
+            PlayerInventoryTranslator.scheduleArmorResend(session);
+        }
 
         if (refresh) {
             InventoryUtils.updateCursor(session);

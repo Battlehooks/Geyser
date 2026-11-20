@@ -77,4 +77,15 @@ public final class GliderUtils {
         }
         return builder.build();
     }
+
+    /**
+     * Whether a glider in the chest slot still has its own Bedrock definition instead of the elytra one.
+     */
+    public static boolean needsElytraSwap(GeyserSession session, GeyserItemStack stack) {
+        if (!isGlider(stack)) {
+            return false;
+        }
+        ItemDefinition elytra = session.getItemMappings().getStoredItems().elytra().getBedrockDefinition();
+        return stack.getItemData(session).getDefinition().getRuntimeId() != elytra.getRuntimeId();
+    }
 }

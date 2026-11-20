@@ -102,28 +102,48 @@ public class PlayerInventoryTranslator extends InventoryTranslator<PlayerInvento
         inventoryContentPacket.setContents(Arrays.asList(contents));
         session.sendUpstreamPacket(inventoryContentPacket);
 
-        // Armor
-        InventoryContentPacket armorContentPacket = new InventoryContentPacket();
-        armorContentPacket.setContainerId(ContainerId.ARMOR);
-        contents = new ItemData[4];
-        for (int i = 5; i < 9; i++) {
-            GeyserItemStack item = inventory.getItem(i);
-            contents[i - 5] = item.getItemData(session);
-            if (i == 6) {
-                contents[1] = GliderUtils.toBedrockChest(session, item, contents[1]);
-            }
-            if (i == 5 && item.is(Items.PLAYER_HEAD) && item.hasNonBaseComponents()) {
-                FakeHeadProvider.setHead(session, session.getPlayerEntity(), item.getComponent(DataComponentTypes.PROFILE));
-            }
-        }
-        armorContentPacket.setContents(Arrays.asList(contents));
-        session.sendUpstreamPacket(armorContentPacket);
+        sendArmorContents(session, inventory, true);
 
         // Offhand
         InventoryContentPacket offhandPacket = new InventoryContentPacket();
         offhandPacket.setContainerId(ContainerId.OFFHAND);
         offhandPacket.setContents(Collections.singletonList(inventory.getItem(45).getItemData(session)));
         session.sendUpstreamPacket(offhandPacket);
+    }
+
+    /**
+     * Send the armor container to Bedrock.
+     * @param applyFakeHead whether to apply the custom skull in the head slot; a resend can skip this as it is already applied
+     */
+    public static void sendArmorContents(GeyserSession session, PlayerInventory inventory, boolean applyFakeHead) {
+        InventoryContentPacket armorContentPacket = new InventoryContentPacket();
+        armorContentPacket.setContainerId(ContainerId.ARMOR);
+        ItemData[] contents = new ItemData[4];
+        for (int i = 5; i < 9; i++) {
+            GeyserItemStack item = inventory.getItem(i);
+            contents[i - 5] = item.getItemData(session);
+            if (i == 6) {
+                contents[1] = GliderUtils.toBedrockChest(session, item, contents[1]);
+            }
+            if (applyFakeHead && i == 5 && item.is(Items.PLAYER_HEAD) && item.hasNonBaseComponents()) {
+                FakeHeadProvider.setHead(session, session.getPlayerEntity(), item.getComponent(DataComponentTypes.PROFILE));
+            }
+        }
+        armorContentPacket.setContents(Arrays.asList(contents));
+        session.sendUpstreamPacket(armorContentPacket);
+    }
+
+    /**
+     * Resend the armor container shortly, so the Bedrock client swaps a worn glider to its elytra definition.
+     * @param session Connection of the player
+     */
+    public static void scheduleArmorResend(GeyserSession session) {
+        session.scheduleInEventLoop(() -> {
+            PlayerInventory inventory = session.getPlayerInventory();
+            if (GliderUtils.needsElytraSwap(session, inventory.getItem(6))) {
+                sendArmorContents(session, inventory, false);
+            }
+        }, 150, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -187,6 +207,10 @@ public class PlayerInventoryTranslator extends InventoryTranslator<PlayerInvento
             offhandPacket.setContainerId(ContainerId.OFFHAND);
             offhandPacket.setContents(Collections.singletonList(bedrockItem));
             session.sendUpstreamPacket(offhandPacket);
+        }
+
+        if (slot == 6 && GliderUtils.needsElytraSwap(session, javaItem)) {
+            scheduleArmorResend(session);
         }
     }
 
